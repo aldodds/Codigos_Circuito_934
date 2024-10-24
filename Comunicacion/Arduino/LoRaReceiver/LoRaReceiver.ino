@@ -1,7 +1,8 @@
-#include <SPI.h>      //Libreria para LoRa
-#include <LoRa.h>     //Libreria para LoRa
+#include <SPI.h>
+#include <LoRa.h>
 
 const int LED_PIN = 3;  // Pin del LED
+const int BLINK_DELAY = 200;  // Tiempo de parpadeo en milisegundos
 
 void setup() {
   Serial.begin(9600);
@@ -11,7 +12,6 @@ void setup() {
   
   // Configurar el pin del LED como salida
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);  // Asegurarse que el LED comience apagado
   
   if (!LoRa.begin(433E6)) {
     Serial.println("Error al iniciar LoRa!");
@@ -19,14 +19,31 @@ void setup() {
   }
 }
 
+void blinkTwice() {
+  // Primer parpadeo
+  digitalWrite(LED_PIN, HIGH);
+  delay(BLINK_DELAY);
+  digitalWrite(LED_PIN, LOW);
+  delay(BLINK_DELAY);
+  
+  // Segundo parpadeo
+  digitalWrite(LED_PIN, HIGH);
+  delay(BLINK_DELAY);
+  digitalWrite(LED_PIN, LOW);
+  delay(BLINK_DELAY);
+
+  // Tercer parpadeo
+  digitalWrite(LED_PIN, HIGH);
+  delay(BLINK_DELAY);
+  digitalWrite(LED_PIN, LOW);
+  delay(BLINK_DELAY);
+}
+
 void loop() {
   // try to parse packet
   int packetSize = LoRa.parsePacket();
   
   if (packetSize) {
-    // Encender el LED cuando se recibe un paquete
-    digitalWrite(LED_PIN, HIGH);
-    
     // read packet
     while (LoRa.available()) {
       Serial.print((char)LoRa.read());
@@ -36,10 +53,7 @@ void loop() {
     Serial.print(" ");
     Serial.println(LoRa.packetRssi());
     
-    // Esperar un momento con el LED encendido
-    delay(500);
-    
-    // Apagar el LED
-    digitalWrite(LED_PIN, LOW);
+    // Hacer parpadear el LED dos veces
+    blinkTwice();
   }
 }
