@@ -1,133 +1,57 @@
-/*!
- * @file  SEN0186.ino
- * @brief DFRobot brings you this new version of the weather station kit that integrates anemometer, wind vane and rain gauge.
- * @copyright  Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
- * @license  The MIT License (MIT)
- * @author  DFRobot
- * @version  V1.0
- * @date  2023-08-03
- */
+//Este codigo es para la estacion meteorologica WS3 de DFRobot 
+// V2.0
 
-char                 databuffer[35];
-double               temp;
+char databuffer[35];
+unsigned long lastUpdate = 0;
+const unsigned long interval = 3000; // Intervalo configurable en milisegundos
 
-void getBuffer()                                                                    //Get weather status data
-{
-  int index;
-  for (index = 0; index < 35; index++) {
+void getBuffer() {
+  int index = 0;
+  while (index < 35) {
     if (Serial.available()) {
-      databuffer[index] = Serial.read();
-      if (databuffer[0] != 'c') {
-        index = -1;
-      }
-    } else {
-      index--;
+      char c = Serial.read();
+      if (index == 0 && c != 'c') continue; // Asegurar inicio correcto
+      databuffer[index++] = c;
     }
   }
 }
 
-int transCharToInt(char* _buffer, int _start, int _stop)                             //char to int）
-{
-  int _index;
+int parseInt(char *buffer, int start, int stop) {
   int result = 0;
-  int num = _stop - _start + 1;
-  int _temp[num];
-  for (_index = _start; _index <= _stop; _index++) {
-    _temp[_index - _start] = _buffer[_index] - '0';
-    result = 10 * result + _temp[_index - _start];
+  for (int i = start; i <= stop; i++) {
+    result = result * 10 + (buffer[i] - '0');
   }
   return result;
 }
 
-int transCharToInt_T(char* _buffer)
-{
-  int result = 0;
-  if (_buffer[13] == '-') {
-    result = 0 - (((_buffer[14] - '0') * 10) + (_buffer[15] - '0'));
-  } else {
-    result = ((_buffer[13] - '0') * 100) + ((_buffer[14] - '0') * 10) + (_buffer[15] - '0');
-  }
-  return result;
+float parseTemp(char *buffer) {
+  int value = (buffer[13] == '-') 
+              ? -((buffer[14] - '0') * 10 + (buffer[15] - '0')) 
+              : ((buffer[13] - '0') * 100 + (buffer[14] - '0') * 10 + (buffer[15] - '0'));
+  return (value - 32) * 5.0 / 9.0;
 }
 
-int WindDirection()                                                                  //Wind Direction
-{
-  return transCharToInt(databuffer, 1, 3);
+void printData() {
+  Serial.print("Wind Direction: "); Serial.println(parseInt(databuffer, 1, 3));
+  Serial.print("Average Wind Speed (1 min): "); Serial.print(parseInt(databuffer, 5, 7) * 0.44704); Serial.println(" m/s");
+  Serial.print("Max Wind Speed (5 min): "); Serial.print(parseInt(databuffer, 9, 11) * 0.44704); Serial.println(" m/s");
+  Serial.print("Rainfall (1 hour): "); Serial.print(parseInt(databuffer, 17, 19) * 0.254); Serial.println(" mm");
+  Serial.print("Rainfall (24 hours): "); Serial.print(parseInt(databuffer, 21, 23) * 0.254); Serial.println(" mm");
+  Serial.print("Temperature: "); Serial.print(parseTemp(databuffer)); Serial.println(" °C");
+  Serial.print("Humidity: "); Serial.print(parseInt(databuffer, 25, 26)); Serial.println(" %");
+  Serial.print("Barometric Pressure: "); Serial.print(parseInt(databuffer, 28, 32) / 10.0); Serial.println(" hPa");
+  Serial.println();
 }
 
-float WindSpeedAverage()                                                             //air Speed (1 minute)
-{
-  temp = 0.44704 * transCharToInt(databuffer, 5, 7);
-  return temp;
-}
-
-float WindSpeedMax()                                                                 //Max air speed (5 minutes)
-{
-  temp = 0.44704 * transCharToInt(databuffer, 9, 11);
-  return temp;
-}
-
-float Temperature()                                                                  //Temperature ("C")
-{
-  temp = (transCharToInt_T(databuffer) - 32.00) * 5.00 / 9.00;
-  return temp;
-}
-
-float RainfallOneHour()                                                              //Rainfall (1 hour)
-{
-  temp = transCharToInt(databuffer, 17, 19) * 25.40 * 0.01;
-  return temp;
-}
-
-float RainfallOneDay()                                                               //Rainfall (24 hours)
-{
-  temp = transCharToInt(databuffer, 21, 23) * 25.40 * 0.01;
-  return temp;
-}
-
-int Humidity()                                                                       //Humidity
-{
-  return transCharToInt(databuffer, 25, 26);
-}
-
-float BarPressure()                                                                  //Barometric Pressure
-{
-  temp = transCharToInt(databuffer, 28, 32);
-  return temp / 10.00;
-}
-
-void setup()
-{
+void setup() {
   Serial.begin(9600);
 }
 
-void loop()
-{
-  getBuffer();                                                                      //Begin!
-  Serial.print("Wind Direction: ");
-  Serial.print(WindDirection());
-  Serial.println("  ");
-  Serial.print("Average Wind Speed (One Minute): ");
-  Serial.print(WindSpeedAverage());
-  Serial.println("m/s  ");
-  Serial.print("Max Wind Speed (Five Minutes): ");
-  Serial.print(WindSpeedMax());
-  Serial.println("m/s");
-  Serial.print("Rain Fall (One Hour): ");
-  Serial.print(RainfallOneHour());
-  Serial.println("mm  ");
-  Serial.print("Rain Fall (24 Hour): ");
-  Serial.print(RainfallOneDay());
-  Serial.println("mm");
-  Serial.print("Temperature: ");
-  Serial.print(Temperature());
-  Serial.println("C  ");
-  Serial.print("Humidity: ");
-  Serial.print(Humidity());
-  Serial.println("%  ");
-  Serial.print("Barometric Pressure: ");
-  Serial.print(BarPressure());
-  Serial.println("hPa");
-  Serial.println("");
-  Serial.println("");
+void loop() {
+  unsigned long currentTime = millis();
+  if (currentTime - lastUpdate >= interval) {
+    lastUpdate = currentTime;
+    getBuffer();
+    printData();
+  }
 }
