@@ -21,3 +21,8 @@ La información de la [APN de la SIM Card de Claro colombia](https://selectra.co
   // Configurar APN de Claro Colombia
   modem.gprsConnect("internet.comcel.com.co", "comcel", "comcel");
 ```
+
+# Estación metereológica
+
+Desconectar los cables TX y RX porque interferirá con la carga del código.
+Primero cargar el código y luego conectar los cables Tx y Rx
