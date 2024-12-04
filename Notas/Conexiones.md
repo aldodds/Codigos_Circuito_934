@@ -1,4 +1,4 @@
-# Conexiones del Arduino al módulo SX1278 Ra-01
+# Arduino al módulo SX1278 Ra-01
 
 *D* corresponde a un pin digital del Arduino UNO.
 
