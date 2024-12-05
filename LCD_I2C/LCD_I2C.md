@@ -3,6 +3,7 @@
 * Instalar la biblioteca `LiquidCrystal_I2C` esde el Administrador de Bibliotecas de Arduino.
 * Dirección I2C: **0x27**
 * La retroilumincación se enciende por medio de un puente *jumper*
+* Se puede cambiar la dirección I2C del módulo configurando los terminales A0, A1 y A2 mediante puentes. Hay 8 combinaciones posibles, de 0x20 a 0x27. Por defecto, la dirección es 0x27, ya que no hay puentes y los terminales están en estado lógico alto.
 
 # Principales métodos disponibles
 
