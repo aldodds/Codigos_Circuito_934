@@ -53,10 +53,10 @@ void setup()
 {
   Serial.begin(115200);
   while(ltr390.begin() != 0){
-    Serial.println(" Sensor initialize failed!!");
+    Serial.println(" Error al inicializar el sensor!!");
     delay(1000);
   }
-  Serial.println(" Sensor  initialize success!!");
+  Serial.println(" El sensor se inicializó correctamente!!");
   ltr390.setALSOrUVSMeasRate(ltr390.e18bit,ltr390.e100ms);//Datos de 18 bits, tiempo de muestreo de 100 ms 
   ltr390.setALSOrUVSGain(ltr390.eGain3);//Ganancia 3
   ltr390.setMode(ltr390.eALSMode);//Establecer modo de luz ambiental
@@ -76,6 +76,36 @@ void loop()
 
 ```c
 #include "DFRobot_LTR390UV.h"
+DFRobot_LTR390UV ltr390(/*addr = */LTR390UV_DEVICE_ADDR, /*pWire = */&Wire);
+
+void setup()
+{
+  Serial.begin(115200);
+  while(ltr390.begin() != 0){
+    Serial.println(" Error al inicializar el sensor!!");
+    delay(1000);
+  }
+  Serial.println(" El sensor se inicializó correctamente!!");
+  ltr390.setALSOrUVSMeasRate(ltr390.e18bit,ltr390.e100ms);//Datos de 18 bits, tiempo de muestreo de 100 ms 
+  ltr390.setALSOrUVSGain(ltr390.eGain3);//Ganancia de 3
+  ltr390.setMode(ltr390.eUVSMode);//Establece el modo UV
+}
+void loop()
+{
+  uint32_t data = 0;
+  data = ltr390.readOriginalData();//Obtener datos sin procesar de UV
+  Serial.print("data:");
+  Serial.println(data);
+  delay(1000);
+}
+```
+
+## UART
+
+### Luz ambiental
+
+```c
+#include "DFRobot_LTR390UV.h"
 #include <SoftwareSerial.h>
 #define UARTMODE //UART mode
 
@@ -88,13 +118,49 @@ void setup()
   mySerial.begin(9600);
   Serial.begin(115200);
   while(ltr390.begin() != 0){
-    Serial.println(" Sensor initialize failed!!");
+    Serial.println(" Error al inicializar el sensor!!");
     delay(1000);
   }
-  Serial.println(" Sensor  initialize success!!");
-  ltr390.setALSOrUVSMeasRate(ltr390.e18bit,ltr390.e100ms);//Datos de 18 bits, tiempo de muestreo de 100 ms  
+  Serial.println(" El sensor se inicializó correctamente!!");
+  ltr390.setALSOrUVSMeasRate(ltr390.e18bit,ltr390.e100ms);//Datos de 18 bits, tiempo de muestreo de 100 ms
   ltr390.setALSOrUVSGain(ltr390.eGain3);//Ganancia de 3
-  ltr390.setMode(ltr390.eUVSMode);//Establece el modo UV
+  ltr390.setMode(ltr390.eALSMode);//Establece el modo de luz ambiental
+}
+
+void loop()
+{
+  float als = 0;
+  als = ltr390.readALSTransformData();//Obtener los datos convertidos de la intensidad de la luz ambiental, que solo se pueden usar en el modo de luz ambiental.
+  Serial.print("ALS:");
+  Serial.print(als);
+  Serial.println("Lux");
+  delay(100);
+}
+```
+
+### UV
+
+```c
+#include "DFRobot_LTR390UV.h"
+#include <SoftwareSerial.h>
+#define UARTMODE //UART mode
+
+SoftwareSerial mySerial(/*rx =*/4, /*tx =*/5);
+DFRobot_LTR390UV ltr390(/*addr =*/LTR390UV_DEVICE_ADDR, /*s =*/&mySerial);
+
+void setup()
+{
+  #define UARTMODE
+  mySerial.begin(9600);
+  Serial.begin(115200);
+  while(ltr390.begin() != 0){
+    Serial.println(" Error al inicializar el sensor!!");
+    delay(1000);
+  }
+  Serial.println(" El sensor se inicializó correctamente!!");
+  ltr390.setALSOrUVSMeasRate(ltr390.e18bit,ltr390.e100ms);//Datos de 18 bits, tiempo de muestreo de 100 ms
+  ltr390.setALSOrUVSGain(ltr390.eGain3);//Ganancia de 3
+  ltr390.setMode(ltr390.eUVSMode);//Establece el modo UV 
 }
 
 void loop()
